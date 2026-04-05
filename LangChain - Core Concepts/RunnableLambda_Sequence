@@ -1,0 +1,30 @@
+from dotenv import load_dotenv
+load_dotenv()
+
+from langchain_groq import ChatGroq
+from langchain_core.runnables import RunnableSequence, RunnableLambda
+
+# Initialize LLM
+llm = ChatGroq(
+    model="openai/gpt-oss-120b",
+    temperature=0
+)
+
+# Step 1: Custom preprocessing function
+def add_instruction(inputs):
+    topic = inputs["topic"]
+    return f"Explain {topic} in simple terms with an example"
+
+# Convert function → Runnable
+preprocess = RunnableLambda(add_instruction)
+
+# Step 2: Sequence
+sequence = RunnableSequence(
+    preprocess,   # custom logic
+    llm           # LLM call
+)
+
+# Step 3: Invoke
+response = sequence.invoke({"topic": "APIs"})
+
+print(response.content)
