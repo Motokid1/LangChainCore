@@ -1,6 +1,4 @@
-# ================================
 # 1. LOAD ENV + LLM
-# ================================
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -9,9 +7,7 @@ from langchain_groq import ChatGroq
 llm = ChatGroq(model="openai/gpt-oss-120b")  # ✅ Fixed model name
 
 
-# ================================
 # 2. LOAD DOCUMENTS (TXT + PDF)
-# ================================
 from langchain_community.document_loaders import (
     DirectoryLoader, TextLoader, PyPDFLoader
 )
@@ -34,9 +30,7 @@ if not docs:
     raise ValueError("No documents found in data/ folder!")
 
 
-# ================================
 # 3. SPLIT DOCUMENTS
-# ================================
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
@@ -49,9 +43,7 @@ if not split_docs:
     raise ValueError("No valid chunks!")
 
 
-# ================================
 # 4. EMBEDDINGS
-# ================================
 from langchain_huggingface import HuggingFaceEmbeddings
 
 embeddings = HuggingFaceEmbeddings(
@@ -59,18 +51,14 @@ embeddings = HuggingFaceEmbeddings(
 )
 
 
-# ================================
 # 5. CHROMA VECTOR STORE
-# ================================
 from langchain_community.vectorstores import Chroma
 
 db = Chroma.from_documents(split_docs, embeddings, persist_directory="./chroma_db")
 retriever = db.as_retriever(search_kwargs={"k": 3})
 
 
-# ================================
 # 6. QA PROMPT
-# ================================
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 qa_prompt = ChatPromptTemplate.from_messages([
@@ -86,9 +74,7 @@ Context:
 ])
 
 
-# ================================
 # 7. FORMAT DOCUMENTS
-# ================================
 def format_docs(docs):
     return "\n\n".join(
         f"{doc.page_content}\nSOURCE: {doc.metadata.get('source', 'unknown')}"
@@ -96,9 +82,7 @@ def format_docs(docs):
     )
 
 
-# ================================
 # 8. LCEL RAG CHAIN
-# ================================
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
 
@@ -118,9 +102,7 @@ rag_chain = (
 )
 
 
-# ================================
 # 9. MEMORY
-# ================================
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
 
@@ -139,9 +121,7 @@ rag_with_memory = RunnableWithMessageHistory(
 )
 
 
-# ================================
 # 10. CHAT LOOP
-# ================================
 print("\n✅ RAG System Ready! Type 'exit' to quit.\n")
 
 while True:
