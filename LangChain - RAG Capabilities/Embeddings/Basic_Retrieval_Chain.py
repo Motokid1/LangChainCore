@@ -30,7 +30,8 @@ llm = ChatGroq(model="openai/gpt-oss-120b")
 
 # Prompt
 prompt = ChatPromptTemplate.from_template(
-    "Answer based on context:\n{context}\n\nQuestion: {question}"
+   # "Answer based on context:\n{context}\n\nQuestion: {question}"
+    "Answer the question based on what you know do not follow the context:\n{context}\n\nQuestion: {question}"
 )
 
 # LCEL chain
