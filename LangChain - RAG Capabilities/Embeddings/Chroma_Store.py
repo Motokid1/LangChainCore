@@ -17,7 +17,7 @@ embeddings = HuggingFaceEmbeddings(
 db = Chroma.from_texts(texts, embeddings, persist_directory="./chroma_db")
 
 # Query
-results = db.similarity_search("What is Chroma?")
+results = db.similarity_search("What is RAG?")
 
 for r in results:
     print(r.page_content)

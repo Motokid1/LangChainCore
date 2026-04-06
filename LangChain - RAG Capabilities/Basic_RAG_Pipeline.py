@@ -13,8 +13,11 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
+
 from langchain_community.retrievers import BM25Retriever
-# from langchain_community.retrievers import EnsembleRetriever
+
+#Import using LangChain Classic
+from langchain_classic.retrievers import EnsembleRetriever
 
 # 3. LOAD MULTIPLE DOCUMENTS
 # Folder: data/ (put .txt files here)
@@ -65,10 +68,10 @@ mmr_retriever = db.as_retriever(
 bm25_retriever = BM25Retriever.from_documents(split_docs)
 
 # 4. Ensemble Retriever (combine all)
-# ensemble_retriever = EnsembleRetriever(
-#     retrievers=[similarity_retriever, mmr_retriever, bm25_retriever],
-#     weights=[0.4, 0.3, 0.3]
-# )
+ensemble_retriever = EnsembleRetriever(
+    retrievers=[similarity_retriever, mmr_retriever, bm25_retriever],
+    weights=[0.4, 0.3, 0.3]
+)
 
 # 9. LLM (GROQ)
 llm = ChatGroq(model="openai/gpt-oss-120b")
