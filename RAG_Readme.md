@@ -42,7 +42,7 @@ User Question
      ▼
 [Retriever] ──── searches vector store ────► [Top-K Relevant Chunks]
      │                                                  │
-     └───────────────────────────────────────────────► │
+     └───────────────────────────────────────────────►  │
                                                         ▼
                                               [Prompt with Context]
                                                         │
