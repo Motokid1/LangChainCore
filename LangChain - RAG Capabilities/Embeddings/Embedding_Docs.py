@@ -12,4 +12,16 @@ documents = [
 
 vectors = embeddings.embed_documents(documents)
 
+# Print the number of vectors generated
 print("Number of vectors:", len(vectors))
+
+# Each vector should have the same dimension as the embedding model's output
+print("Dimension of each vector:", len(vectors[0]))
+
+# Print first 5 dimensions of the first vector
+print("First vector:", vectors[0][:5], "...") 
+ 
+print("All vectors:", vectors)
+
+print("Embedding process completed successfully.")
+
