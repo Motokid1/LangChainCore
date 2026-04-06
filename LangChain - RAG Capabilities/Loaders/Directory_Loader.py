@@ -1,6 +1,6 @@
 from langchain_community.document_loaders import DirectoryLoader
 
-loader = DirectoryLoader("data/", glob="*.txt")
+loader = DirectoryLoader("data/", glob="*.txt" )
 
 docs = loader.load()
 

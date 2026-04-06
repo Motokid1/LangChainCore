@@ -4,7 +4,7 @@ load_dotenv()
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 
-from langchain.chains import create_history_aware_retriever
+from langchain_classic.chains import create_history_aware_retriever
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document

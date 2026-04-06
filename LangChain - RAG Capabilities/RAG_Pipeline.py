@@ -4,7 +4,7 @@ load_dotenv()
 
 from langchain_groq import ChatGroq
 
-llm = ChatGroq(model="openai/gpt-oss-120b")  # ✅ Fixed model name
+llm = ChatGroq(model="openai/gpt-oss-120b")  
 
 
 # 2. LOAD DOCUMENTS (TXT + PDF)
@@ -21,7 +21,11 @@ txt_loader = DirectoryLoader(
 )
 docs.extend(txt_loader.load())
 
-pdf_loader = DirectoryLoader("data/", glob="**/*.pdf", loader_cls=PyPDFLoader)
+pdf_loader = DirectoryLoader(
+    "data/", 
+    glob="**/*.pdf", 
+    loader_cls=PyPDFLoader
+    )
 docs.extend(pdf_loader.load())
 
 print(f"Loaded documents: {len(docs)}")
