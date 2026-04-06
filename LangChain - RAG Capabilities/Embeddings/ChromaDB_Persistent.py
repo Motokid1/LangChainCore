@@ -31,5 +31,8 @@ db2 = Chroma(
 
 retriever = db2.as_retriever()
 
-results = retriever.invoke("What is RAG?")
-print(results)
+results = retriever.invoke("What is LangChain?")
+print(results[0].page_content)
+
+#Why are the documents stored in the chroma database?
+# The documents are stored in the chroma database to enable efficient retrieval based on their vector representations
