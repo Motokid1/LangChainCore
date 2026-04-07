@@ -41,6 +41,9 @@
 - Chains connect prompt → LLM → parser → memory (optional).
 - Simplifies data flow between components.
 - Useful for pipelines like: prompt → model → parse → store.
+- When you use the pipe operator (|) to build a chain, LangChain's LCEL automatically wraps plain Python functions into RunnableLambda objects behind the scenes. This is called implicit coercion.
+- LCEL chains are built from Runnables — objects that implement a .invoke(), .stream(), and .batch() interface.
+- When you plug a raw Python function into a chain using |, LangChain detects it isn't a Runnable and wraps it automatically.
 
 ## 8️⃣ Memory
 
