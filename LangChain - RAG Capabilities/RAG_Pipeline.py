@@ -78,8 +78,11 @@ Context:
     ("human", "{input}")
 ])
 
+from langsmith import traceable
+
 
 # 7. FORMAT DOCUMENTS
+@traceable  # ✅ This will now show up as a clear step in LangSmith
 def format_docs(docs):
     return "\n\n".join(
         f"{doc.page_content}\nSOURCE: {doc.metadata.get('source', 'unknown')}"
@@ -92,6 +95,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableLambda
 
 # ✅ Key fix: extract string from dict before retriever
+@traceable
 def get_input_str(x):
     return x["input"] if isinstance(x, dict) else x
 
