@@ -21,7 +21,7 @@ from langchain_classic.retrievers import EnsembleRetriever
 
 # 3. LOAD MULTIPLE DOCUMENTS
 # Folder: data/ (put .txt files here)
-loader = DirectoryLoader("data/", glob="*.txt", loader_cls=TextLoader)
+loader = DirectoryLoader("D:\Gen AI\LangChain - RAG Capabilities\data", glob="*.txt", loader_cls=TextLoader)
 docs = loader.load()
 
 print(f"Loaded {len(docs)} documents")

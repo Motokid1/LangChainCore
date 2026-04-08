@@ -23,7 +23,7 @@ txt_loader = DirectoryLoader(
 docs.extend(txt_loader.load())
 
 pdf_loader = DirectoryLoader(
-    "data/", 
+   "D:\Gen AI\LangChain - RAG Capabilities\data",
     glob="**/*.pdf", 
     loader_cls=PyPDFLoader
     )
@@ -69,7 +69,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 qa_prompt = ChatPromptTemplate.from_messages([
     ("system", """You are a helpful AI assistant.
 Use the retrieved context to answer the question.
-If answer is not found, say I don't know.
+If answer is not found, say I don't know and Fetch from NASA database.
 Include source references at the end.
 
 Context:
