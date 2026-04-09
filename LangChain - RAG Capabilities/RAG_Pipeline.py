@@ -99,6 +99,17 @@ from langchain_core.runnables import RunnableLambda
 def get_input_str(x):
     return x["input"] if isinstance(x, dict) else x
 
+#what does get_input_str do?
+#It checks if the input is a dictionary and extracts the "input" key's value. 
+#If it's not a dictionary, it returns the input as is. 
+#This ensures that the retriever receives a clean string query, preventing errors when the input is passed through the chain.
+
+#why is it necessary?
+#In the RAG chain, the input is often passed as a dictionary containing various keys 
+#(like "input" for the query and "chat_history" for previous interactions).
+#If we pass the entire dictionary to the retriever, it will cause an error since the retriever expects a string query.
+#By using get_input_str, we ensure that only the relevant query string is sent to the retriever, allowing the chain to function correctly without type errors.
+
 rag_chain = (
     {
         "context": RunnableLambda(get_input_str) | retriever | format_docs,

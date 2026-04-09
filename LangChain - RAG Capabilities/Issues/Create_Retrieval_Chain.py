@@ -4,6 +4,7 @@ load_dotenv()
 from langchain_groq import ChatGroq
 from langchain_classic.chains.retrieval import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+#from langchain_classic.chains.combine_documents import create_map_reduce_documents_chain
 
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -29,6 +30,7 @@ prompt = ChatPromptTemplate.from_template(
 )
 
 doc_chain = create_stuff_documents_chain(llm, prompt)
+#doc_chain2  = create_map_reduce_documents_chain(llm, prompt)
 
 rag_chain = create_retrieval_chain(retriever, doc_chain)
 

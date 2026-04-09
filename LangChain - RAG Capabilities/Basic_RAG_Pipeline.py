@@ -100,14 +100,22 @@ Question:
 )
 
 # 11. FORMAT DOCUMENTS FUNCTION
+# def format_docs(docs):
+#     return "\n\n".join(
+#         f"[Source: {doc.metadata.get('source')}]\n{doc.page_content}"
+#         for doc in docs
+#     )
+
 def format_docs(docs):
-    return "\n\n".join(
-        f"[Source: {doc.metadata.get('source')}]\n{doc.page_content}"
-        for doc in docs
-    )
+    formatted = []
+    for doc in docs:
+        source = doc.metadata.get("source")
+        content = doc.page_content
+        formatted.append(f"[Source: {source}]\n{content}")
+    return "\n\n".join(formatted)
 
 # 12. LCEL RAG PIPELINE
-rag_chain = (
+rag_chain = (   
     RunnableParallel(
         context=similarity_retriever | format_docs,
         question=lambda x: x
