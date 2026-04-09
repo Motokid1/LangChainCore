@@ -9,6 +9,7 @@ llm = ChatGroq(model="openai/gpt-oss-120b")
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
+from langchain_classic.chains import RetrievalQA
 
 docs = [
     Document(page_content="RAG retrieves documents before answering."),
@@ -29,18 +30,13 @@ def format_docs(docs):
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-prompt = ChatPromptTemplate.from_template(
-    "Answer using context:\n{context}\n\nQuestion: {question}"
-)
+# prompt = ChatPromptTemplate.from_template(
+#     "Answer using context:\n{context}\n\nQuestion: {question}"
+# )
 
-rag_chain = (
-    {
-        "context": retriever | format_docs,
-        "question": lambda x: x
-    }
-    | prompt
-    | llm
-    | StrOutputParser()
+rag_chain = RetrievalQA.from_chain_type (
+    llm=llm,
+    retriever=retriever,
 )
 
 # 5. RUN

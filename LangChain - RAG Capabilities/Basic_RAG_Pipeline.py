@@ -21,15 +21,21 @@ from langchain_classic.retrievers import EnsembleRetriever
 
 # 3. LOAD MULTIPLE DOCUMENTS
 # Folder: data/ (put .txt files here)
-loader = DirectoryLoader("D:\Gen AI\LangChain - RAG Capabilities\data", glob="*.txt", loader_cls=TextLoader)
+loader = DirectoryLoader(
+    path="D:\Gen AI\LangChain - RAG Capabilities\data", 
+    glob="*.txt", 
+    loader_cls=TextLoader
+    )
 docs = loader.load()
-
+print(f"Type of loaded docs: {type(docs)},Type of first doc: {type(docs[0])}")
 print(f"Loaded {len(docs)} documents")
+print(f"Metadata of first doc: {docs[0].metadata}")
 
 # 4. ADD METADATA
 for i, doc in enumerate(docs):
     doc.metadata["source"] = f"file_{i}"
     doc.metadata["type"] = "text"
+
 
 # 5. SPLIT DOCUMENTS
 splitter = RecursiveCharacterTextSplitter(
@@ -40,10 +46,12 @@ splitter = RecursiveCharacterTextSplitter(
 split_docs = splitter.split_documents(docs)
 
 print(f"Total chunks: {len(split_docs)}")
+print(f"Metadata of first chunk: {split_docs[0].metadata}")
+print(f"Type of first chunk: {type(split_docs[0])}")
 
-# 6. EMBEDDINGS (FREE)
+# 6. EMBEDDINGS 
 embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+    model_name="sentence-transformers/all-MiniLM-L6-v2",
 )
 
 # 7. CHROMA VECTOR STORE

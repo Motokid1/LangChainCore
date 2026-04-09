@@ -25,6 +25,7 @@ from langchain_classic.chains import RetrievalQA
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     retriever=retriever
+    # strategy="map_reduce", 
 )
 
 # 4. RUN
