@@ -16,7 +16,8 @@ from langchain_community.document_loaders import (
 docs = []
 
 txt_loader = DirectoryLoader(
-    "data/", glob="**/*.txt",
+    "D:\Gen AI\LangChain - RAG Capabilities\data", 
+    glob="**/*.txt",
     loader_cls=TextLoader,
     loader_kwargs={"encoding": "utf-8"}
 )
@@ -97,7 +98,9 @@ from langchain_core.runnables import RunnableLambda
 # ✅ Key fix: extract string from dict before retriever
 @traceable
 def get_input_str(x):
-    return x["input"] if isinstance(x, dict) else x
+    if isinstance(x, dict):
+        return x.get("input", x)
+    return x
 
 #what does get_input_str do?
 #It checks if the input is a dictionary and extracts the "input" key's value. 
@@ -137,7 +140,7 @@ rag_with_memory = RunnableWithMessageHistory(
     rag_chain,
     get_session_history,
     input_messages_key="input",
-    history_messages_key="chat_history"
+    history_messages_key="chat_history",
 )
 
 
