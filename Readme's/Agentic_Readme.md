@@ -1,4 +1,4 @@
-# 🚀 LangChain Core + Agentic Concepts (README)
+# 🚀 LangChain Core + Agentic Concepts
 
 This document explains the **core building blocks of LangChain Agents** using the modern ecosystem, focusing only on:
 
