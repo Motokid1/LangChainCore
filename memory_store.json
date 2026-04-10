@@ -1,0 +1,92 @@
+{
+  "user1": [
+    {
+      "type": "human",
+      "content": "Yo "
+    },
+    {
+      "type": "ai",
+      "content": "Hey! How can I help you today?"
+    },
+    {
+      "type": "human",
+      "content": "I am Rohith "
+    },
+    {
+      "type": "ai",
+      "content": "Nice to meet you, Rohith! How can I help you today?"
+    },
+    {
+      "type": "human",
+      "content": "what is my name "
+    },
+    {
+      "type": "ai",
+      "content": "I don't know."
+    },
+    {
+      "type": "human",
+      "content": "name? "
+    },
+    {
+      "type": "ai",
+      "content": "I\u2019m ChatGPT."
+    },
+    {
+      "type": "human",
+      "content": "what is my name?"
+    },
+    {
+      "type": "ai",
+      "content": "I don't know."
+    },
+    {
+      "type": "human",
+      "content": "I love learning AI "
+    },
+    {
+      "type": "ai",
+      "content": "That\u2019s great! What part of AI are you most interested in\u2014machine learning, neural networks, ethics, or something else?"
+    },
+    {
+      "type": "human",
+      "content": "what I love to do "
+    },
+    {
+      "type": "ai",
+      "content": "What activities bring you the most joy?"
+    },
+    {
+      "type": "human",
+      "content": "Yo "
+    },
+    {
+      "type": "ai",
+      "content": "Hey! How can I help you today?"
+    },
+    {
+      "type": "human",
+      "content": "I am Rohith and you are? "
+    },
+    {
+      "type": "ai",
+      "content": "I\u2019m ChatGPT, your AI assistant."
+    },
+    {
+      "type": "human",
+      "content": "What is my name?"
+    },
+    {
+      "type": "ai",
+      "content": "Your name is Rohith."
+    },
+    {
+      "type": "human",
+      "content": "how do you know my name?"
+    },
+    {
+      "type": "ai",
+      "content": "I saw you tell me your name earlier in our chat (\u201cI am Rohith\u201d), so I stored that information and used it to answer your question."
+    }
+  ]
+}
