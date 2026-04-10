@@ -47,11 +47,15 @@ text_loader_chain = RunnableLambda(
     )
 )
 
-# 6. Tools (WITH DOCSTRINGS ✅)
+# 6. Tools 
 @tool
 def load_pdfs(_: str = "") -> str:
     """Load all PDF documents from the data folder"""
     return pdf_loader_chain.invoke(None)
+#what does the _ do in the function signature?
+# The underscore (_) in the function signature is a common convention in Python to indicate that the parameter is intentionally unused. 
+# It serves as a placeholder to show that the function expects an argument, but that argument will not be utilized within the function body. 
+# In this case, the load_pdfs and load_texts functions are designed to be called without any meaningful input, so the underscore is used to signify that the input parameter is not relevant to the function's operation.
 
 @tool
 def load_texts(_: str = "") -> str:
