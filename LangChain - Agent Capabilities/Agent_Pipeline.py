@@ -2,8 +2,10 @@
 from langchain.chat_models import init_chat_model
 from langchain.agents import create_agent
 from langchain.tools import tool
+
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableLambda
+from langchain_core.output_parsers import StrOutputParser
 
 from langchain_community.document_loaders import (
     DirectoryLoader,
@@ -11,8 +13,14 @@ from langchain_community.document_loaders import (
     TextLoader
 )
 
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+from langchain_community.vectorstores import Chroma
+
 # 2. Constants
 DATA_PATH = r"D:\Gen AI\data"
+CHROMA_PATH = r"D:\Gen AI\chroma_db"
 
 # 3. Initialize LLM
 llm = init_chat_model(
@@ -21,84 +29,125 @@ llm = init_chat_model(
     temperature=0
 )
 
-# 4. Helper Function
-def load_docs(loader):
-    docs = loader.load()
-    return "\n".join([doc.page_content for doc in docs])[:3000]
+parser = StrOutputParser()
 
-# 5. LCEL Loader Chains
-pdf_loader_chain = RunnableLambda(
-    lambda _: load_docs(
-        DirectoryLoader(
-            DATA_PATH,
-            glob="**/*.pdf",
-            loader_cls=PyPDFLoader
-        )
-    )
+# 4. Load Documents
+def load_all_docs():
+    pdf_docs = DirectoryLoader(
+        DATA_PATH,
+        glob="**/*.pdf",
+        loader_cls=PyPDFLoader
+    ).load()
+
+    text_docs = DirectoryLoader(
+        DATA_PATH,
+        glob="**/*.txt",
+        loader_cls=TextLoader
+    ).load()
+
+    return pdf_docs + text_docs
+
+# 5. Split Documents
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=500,
+    chunk_overlap=50
 )
 
-text_loader_chain = RunnableLambda(
-    lambda _: load_docs(
-        DirectoryLoader(
-            DATA_PATH,
-            glob="**/*.txt",
-            loader_cls=TextLoader
-        )
-    )
+documents = load_all_docs()
+chunks = splitter.split_documents(documents)
+
+# 6. Embeddings
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-# 6. Tools 
-@tool
-def load_pdfs(_: str = "") -> str:
-    """Load all PDF documents from the data folder"""
-    return pdf_loader_chain.invoke(None)
-#what does the _ do in the function signature?
-# The underscore (_) in the function signature is a common convention in Python to indicate that the parameter is intentionally unused. 
-# It serves as a placeholder to show that the function expects an argument, but that argument will not be utilized within the function body. 
-# In this case, the load_pdfs and load_texts functions are designed to be called without any meaningful input, so the underscore is used to signify that the input parameter is not relevant to the function's operation.
+# 7. Chroma Vector Store (PERSISTENT)
+vectorstore = Chroma.from_documents(
+    documents=chunks,
+    embedding=embeddings,
+    persist_directory=CHROMA_PATH
+)
 
-@tool
-def load_texts(_: str = "") -> str:
-    """Load all text files from the data folder"""
-    return text_loader_chain.invoke(None)
+# Save to disk
+vectorstore.persist()
 
-# 7. Math Tools (WITH DOCSTRINGS ✅)
+# Retriever
+retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+
+# 8. RAG Chain (LCEL)
+def format_docs(docs):
+    return "\n\n".join([doc.page_content for doc in docs])
+
+rag_chain = (
+    RunnableLambda(lambda x: x["query"])
+    | RunnableLambda(lambda q: {"docs": retriever.invoke(q), "query": q})
+    | RunnableLambda(lambda x: {
+        "context": format_docs(x["docs"]),
+        "query": x["query"]
+    })
+    | RunnableLambda(
+        lambda x: f"""
+        Answer based on the context.
+
+        Context:
+        {x['context']}
+
+        Question:
+        {x['query']}
+        """
+    )
+    | llm
+    | parser
+)
+
+# 9. Tools
+@tool
+def rag_search(query: str) -> str:
+    """Search and answer using stored documents (Chroma RAG)"""
+    return rag_chain.invoke({"query": query})
+
+
 @tool
 def add(a: int, b: int) -> int:
     """Add two numbers"""
     return a + b
+
 
 @tool
 def multiply(a: int, b: int) -> int:
     """Multiply two numbers"""
     return a * b
 
+
 @tool
 def power(a: int, b: int) -> int:
     """Raise a to the power of b"""
     return a ** b
 
+
 @tool
 def divide(a: int, b: int) -> float:
-    """Divide a by b (handles division by zero)"""
+    """Divide a by b"""
     return a / b if b != 0 else 0
 
-# 8. Summarizer (LCEL)
-summarizer_chain = RunnableLambda(
-    lambda text: f"Summarize this:\n{text}"
-) | llm
+
+# 10. Summarizer
+summarizer_chain = (
+    RunnableLambda(lambda text: f"Summarize:\n{text}")
+    | llm
+    | parser
+)
 
 @tool
 def summarize_text(text: str) -> str:
-    """Summarize the given text content"""
-    return summarizer_chain.invoke(text).content
+    """Summarize given text"""
+    return summarizer_chain.invoke(text)
 
-# 9. Create Agent
+# 11. Create Agent
 agent = create_agent(
     model=llm,
     tools=[
-        load_pdfs,
-        load_texts,
+        rag_search,
         add,
         multiply,
         power,
@@ -109,18 +158,18 @@ agent = create_agent(
     You are an advanced AI agent.
 
     Capabilities:
-    - Load PDFs and text files
+    - Answer from documents using Chroma RAG
     - Perform math operations
     - Summarize content
 
     Rules:
-    - Use tools when needed
+    - Use RAG for document-based questions
+    - Use math tools when needed
     - Think step-by-step
-    - Give clear final answers
     """
 )
 
-# 10. Input Builder (CRITICAL)
+# 12. Input Builder
 def build_input(user_input: str):
     return {
         "messages": [
@@ -131,17 +180,17 @@ def build_input(user_input: str):
 
 input_chain = RunnableLambda(build_input)
 
-# 11. LCEL Agent Pipeline
+# 13. Agent Pipeline
 agent_chain = input_chain | agent
 
-# 12. Extract Final Answer (FIX)
+# 14. Extract Final Answer
 def get_final_answer(response: dict):
     return response["messages"][-1].content
 
-# 13. Run
+# 15. Run
 if __name__ == "__main__":
     while True:
-        query = input("\nEnter your query (or 'exit'): ")
+        query = input("\nEnter query (or 'exit'): ")
 
         if query.lower() == "exit":
             break
