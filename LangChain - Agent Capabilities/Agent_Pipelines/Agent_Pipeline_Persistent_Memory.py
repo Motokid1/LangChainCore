@@ -186,13 +186,12 @@ if __name__ == "__main__":
         memory_context = build_memory_context(session_id)
 
         full_input = f"""
-Memory Context:
-{memory_context}
+            Memory Context:
+            {memory_context}
 
-User Query:
-{query}
-"""
-
+            User Query:
+            {query}
+            """
         response = agent.invoke({
             "messages": [
                 ("user", full_input)

@@ -1,3 +1,20 @@
+#Architectural Pattern: Agent Pipeline with RAG and Tools
+#                 ┌─────────────────────────┐
+# User Query ───▶│        AGENT            │
+#                 │ (create_agent)         │
+#                 └─────────┬──────────────┘
+#                           │
+#         ┌─────────────────┼──────────────────┐
+#         │                 │                  │
+#    add tool         rag_search tool     summarize tool
+#         │                 │                  │
+#         │           ┌─────────────┐          │
+#         │           │   LCEL RAG  │          │
+#         │           │ pipeline    │          │
+#         │           └─────────────┘          │
+#         │                                    │
+#    math result                        summary result
+
 # 1. Imports
 from langchain.chat_models import init_chat_model
 from langchain.agents import create_agent
