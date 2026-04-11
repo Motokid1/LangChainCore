@@ -106,30 +106,25 @@ def rag_search(query: str) -> str:
     """Search and answer using stored documents (Chroma RAG)"""
     return rag_chain.invoke({"query": query})
 
-
 @tool
 def add(a: int, b: int) -> int:
     """Add two numbers"""
     return a + b
-
 
 @tool
 def multiply(a: int, b: int) -> int:
     """Multiply two numbers"""
     return a * b
 
-
 @tool
 def power(a: int, b: int) -> int:
     """Raise a to the power of b"""
     return a ** b
 
-
 @tool
 def divide(a: int, b: int) -> float:
     """Divide a by b"""
     return a / b if b != 0 else 0
-
 
 # 10. Summarizer
 summarizer_chain = (
