@@ -197,5 +197,11 @@ if __name__ == "__main__":
 
         response = agent_chain.invoke(query)
 
-        print("\n===== FINAL RESPONSE =====\n")
+        print("\n===== TOOL CALLS =====\n")
         print(get_final_answer(response))
+        for msg in response["messages"]:
+            if getattr(msg, "tool_calls", None):
+                print(msg.tool_calls)
+
+        print("\n===== FINAL RESPONSE =====\n")
+        
