@@ -87,6 +87,56 @@
     {
       "type": "ai",
       "content": "I saw you tell me your name earlier in our chat (\u201cI am Rohith\u201d), so I stored that information and used it to answer your question."
+    },
+    {
+      "type": "human",
+      "content": "Weater "
+    },
+    {
+      "type": "ai",
+      "content": "The current weather in Bengaluru, India is **32\u202f\u00b0C** with scattered clouds."
+    },
+    {
+      "type": "human",
+      "content": "What is my name "
+    },
+    {
+      "type": "ai",
+      "content": "Your name is Rohith."
+    }
+  ],
+  "user2": [
+    {
+      "type": "human",
+      "content": "Yo "
+    },
+    {
+      "type": "ai",
+      "content": "Hey! How can I help you today?"
+    },
+    {
+      "type": "human",
+      "content": "What is my name"
+    },
+    {
+      "type": "ai",
+      "content": "I don't know."
+    },
+    {
+      "type": "human",
+      "content": "My name is Rohith "
+    },
+    {
+      "type": "ai",
+      "content": "Got it, Rohith!"
+    },
+    {
+      "type": "human",
+      "content": "What is my name?"
+    },
+    {
+      "type": "ai",
+      "content": "Your name is Rohith."
     }
   ]
 }

@@ -52,64 +52,58 @@
         #          │ Memory Storage Update        │
         #          │ Save Q/A → JSON File         │
         #          └──────────────────────────────┘
-# 1. Imports
 import os
 import json
 import requests
 from dotenv import load_dotenv
 
-from langchain.chat_models import init_chat_model
+from langchain_groq import ChatGroq
 from langchain.tools import tool
+from langchain.agents import create_agent
 
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnableLambda
-
-# 2. ENV
+# 1. ENV
 load_dotenv()
+
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
-
 if not OPENWEATHER_API_KEY:
-    raise ValueError("❌ OPENWEATHER_API_KEY not found")
+    raise ValueError("OPENWEATHER_API_KEY not found")
 
-# 3. LLM
-llm = init_chat_model(
-    model="openai/gpt-oss-120b",
-    model_provider="groq",
-    temperature=0
-)
 
-parser = StrOutputParser()
+# 2. LLM
+llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
 
-# 4. TOOLS
+
+# 3. TOOLS
 @tool
 def get_current_location() -> str:
-    """Get current weather for a given location."""
-    try:
-        res = requests.get("http://ip-api.com/json/", timeout=5).json()
-        if res.get("status") != "success":
-            return "Unable to fetch location"
-        return f"{res.get('city')}, {res.get('country')}"
-    except Exception as e:
-        return f"Location error: {str(e)}"
+    """Get current user location based on IP"""
+    res = requests.get("http://ip-api.com/json/", timeout=5).json()
+    if res.get("status") != "success":
+        return "Unable to fetch location"
+    return f"{res.get('city')}, {res.get('country')}"
 
 
 @tool
 def get_weather(location: str) -> str:
-    """Get current weather for a given location."""
-    try:
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={location}&appid={OPENWEATHER_API_KEY}&units=metric"
-        res = requests.get(url, timeout=5).json()
+    """Get weather for a given location"""
+    url = (
+        f"http://api.openweathermap.org/data/2.5/weather"
+        f"?q={location}&appid={OPENWEATHER_API_KEY}&units=metric"
+    )
+    res = requests.get(url, timeout=5).json()
 
-        if res.get("cod") != 200:
-            return f"Weather error: {res.get('message')}"
+    if res.get("cod") != 200:
+        return f"Weather error: {res.get('message')}"
 
-        return f"{location}: {res['main']['temp']}°C, {res['weather'][0]['description']}"
-    except Exception as e:
-        return f"Weather error: {str(e)}"
+    return f"{location}: {res['main']['temp']}°C, {res['weather'][0]['description']}"
 
-# 5. MEMORY (JSON STORE)
+
+tools = [get_current_location, get_weather]
+
+
+# 4. JSON MEMORY
 MEMORY_FILE = "memory_store.json"
+
 
 def load_memory():
     if not os.path.exists(MEMORY_FILE):
@@ -117,13 +111,15 @@ def load_memory():
     with open(MEMORY_FILE, "r") as f:
         return json.load(f)
 
+
 def save_memory(store):
     with open(MEMORY_FILE, "w") as f:
         json.dump(store, f, indent=2)
 
+
 store = load_memory()
 
-# 6. BUILD MEMORY CONTEXT (KEY FIX)
+
 def build_memory_context(session_id):
     if session_id not in store:
         return ""
@@ -131,13 +127,13 @@ def build_memory_context(session_id):
     history = store[session_id]
 
     context = "Previous conversation:\n"
-    for msg in history[-6:]:  # last 6 messages
+    for msg in history[-6:]:
         role = "User" if msg["type"] == "human" else "Assistant"
         context += f"{role}: {msg['content']}\n"
 
     return context
 
-# 7. SAVE MEMORY
+
 def save_session(session_id, user_input, response):
     if session_id not in store:
         store[session_id] = []
@@ -147,84 +143,73 @@ def save_session(session_id, user_input, response):
 
     save_memory(store)
 
-# 8. PROMPT (UPDATED)
-prompt = ChatPromptTemplate.from_messages([
-    ("system", """
+
+# 5. SYSTEM PROMPT (IMPORTANT CHANGE)
+system_prompt = """
 You are a helpful assistant.
 
-Use the conversation context to answer questions.
-If the user asks about previous information (like name, preferences, etc),
-look into the context.
+You have access to tools:
+- get_current_location
+- get_weather
 
-{memory_context}
+Use tools when required.
 
-Rules:
-- Be concise
-- Do not hallucinate
-- Say "I don't know" if not found
-"""),
-    ("human", "{input}")
-])
+Use conversation context to answer memory-based questions.
 
-# 9. CHAIN
-llm_chain = prompt | llm | parser
+If you don't know something, say "I don't know".
 
-# 10. ROUTER
-def router(x):
-    query = x["input"]
-    session_id = x["session_id"]
+Be concise.
+"""
 
-    # TOOL ROUTING
-    if "weather" in query.lower():
-        loc = get_current_location.invoke({})
-        weather = get_weather.invoke({"location": loc})
-        return {"output": weather, "source": "weather"}
 
-    elif "location" in query.lower():
-        loc = get_current_location.invoke({})
-        return {"output": loc, "source": "location"}
+# 6. CREATE AGENT (NO ROUTER, NO LCEL)
+agent = create_agent(
+    model=llm,
+    tools=tools,
+    system_prompt=system_prompt
+)
 
-    # MEMORY CONTEXT INJECTION (MAIN FIX)
-    memory_context = build_memory_context(session_id)
 
-    answer = llm_chain.invoke({
-        "input": query,
-        "memory_context": memory_context
-    })
-
-    return {"output": answer, "source": "llm"}
-
-# 11. CHAIN PIPELINE
-chain = RunnableLambda(router)
-
-# 12. RUN
+# 7. RUN LOOP
 if __name__ == "__main__":
-    print("🚀 Memory-Enabled Agent Started")
+    print("🚀 Agent with Memory Started (create_agent)")
 
-    session_id = "user1"
+    session_id = "user2"
 
     while True:
         query = input("\nEnter query: ")
 
         if query.lower() == "exit":
-            print("👋 Exiting...")
             break
 
-        try:
-            response = chain.invoke({
-                "input": query,
-                "session_id": session_id
-            })
+        # inject memory context into input
+        memory_context = build_memory_context(session_id)
 
-            # SAVE MEMORY
-            save_session(session_id, query, response["output"])
+        full_input = f"""
+Memory Context:
+{memory_context}
 
-            print("\n===== RESPONSE =====")
-            print("Answer :", response["output"])
-            print("Source :", response["source"])
+User Query:
+{query}
+"""
 
-        except Exception as e:
-            print("\n❌ Error:", str(e))
+        response = agent.invoke({
+            "messages": [
+                ("user", full_input)
+            ]
+        })
+
+        # extract final answer
+        final_answer = response["messages"][-1].content
+
+        # save memory
+        save_session(session_id, query, final_answer)
+
+        print("\n===== RESPONSE =====")
+        print("Answer:", final_answer)
+        for msg in response["messages"]:
+            if getattr(msg, "tool_calls", None):
+                print(msg.tool_calls)
             
 # Why this file is different from Agent_Pipeline_with_Memory.py:
 # 1. Memory Storage: This version uses a JSON file to persist memory across sessions,

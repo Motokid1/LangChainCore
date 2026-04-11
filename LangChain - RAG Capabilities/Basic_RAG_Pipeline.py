@@ -18,11 +18,12 @@ from langchain_community.retrievers import BM25Retriever
 
 #Import using LangChain Classic
 from langchain_classic.retrievers import EnsembleRetriever
+from langchain_classic.chat_models import init_chat_model
 
 # 3. LOAD MULTIPLE DOCUMENTS
 # Folder: data/ (put .txt files here)
 loader = DirectoryLoader(
-    path="D:\Gen AI\LangChain - RAG Capabilities\data", 
+    path="D:\Gen AI\data", 
     glob="*.txt", 
     loader_cls=TextLoader
     )
@@ -82,7 +83,15 @@ ensemble_retriever = EnsembleRetriever(
 )
 
 # 9. LLM (GROQ)
-llm = ChatGroq(model="openai/gpt-oss-120b")
+llm = init_chat_model(
+    model="openai/gpt-oss-120b",
+    model_provider="groq"
+)
+
+# llm = ChatGroq(
+#     model="openai/gpt-oss-120b"
+#     )
+
 
 # 10. PROMPT TEMPLATE
 prompt = ChatPromptTemplate.from_template(

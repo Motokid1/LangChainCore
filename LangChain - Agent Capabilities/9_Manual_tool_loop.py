@@ -12,17 +12,17 @@ def add(a: int, b: int) -> int:
     """Add two numbers"""
     return a + b
 
-@tool
-def tool_user() -> str: # Removed a, b because they aren't needed for this
+@tool("different_tool_name")
+def tool_user() -> str: 
     """Check who is currently using the tool"""
     return "Rohith is using the tool"
 
 # Create a dictionary to map tool names to functions
-tools_map = {"add": add, "tool_user": tool_user}
+tools_map = {"add": add, "different_tool_name": tool_user}
 
 llm_with_tools = llm.bind_tools(list(tools_map.values()))
 
-messages = [HumanMessage(content="What is 10 + 20? And who is using the tool?")]
+messages = [HumanMessage(content="What is 20 + 20? And who is using the tool?")]
 
 # Step 1: Model response
 ai_msg = llm_with_tools.invoke(messages)

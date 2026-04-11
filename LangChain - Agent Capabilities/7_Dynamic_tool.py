@@ -7,8 +7,7 @@ from langchain_core.messages import HumanMessage, ToolMessage
 load_dotenv()
 
 # 1. Setup Model and Tool
-llm = ChatGroq(model="openai/gpt-oss-120b") # Using a standard Groq model name
-
+llm = ChatGroq(model="openai/gpt-oss-120b") 
 @tool
 def multiply(a: int, b: int) -> int:
     """Multiply numbers quickly"""

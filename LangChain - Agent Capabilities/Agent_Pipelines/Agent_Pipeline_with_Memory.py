@@ -68,60 +68,50 @@ import os
 import requests
 from dotenv import load_dotenv
 
-from langchain.chat_models import init_chat_model
+from langchain_groq import ChatGroq
 from langchain.tools import tool
+from langchain.agents import create_agent
 
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnableLambda
-from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
 
-# 2. Load ENV
+# 1. Load ENV
 load_dotenv()
 
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 if not OPENWEATHER_API_KEY:
-    raise ValueError("❌ OPENWEATHER_API_KEY not found")
+    raise ValueError("OPENWEATHER_API_KEY not found")
 
-# 3. LLM
-llm = init_chat_model(
-    model="openai/gpt-oss-120b",
-    model_provider="groq",
-    temperature=0
-)
+# 2. LLM
+llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
 
-parser = StrOutputParser()
-
-# 4. TOOLS
+# 3. TOOLS
 @tool
 def get_current_location() -> str:
-    """Get current user location"""
-    try:
-        res = requests.get("http://ip-api.com/json/", timeout=5).json()
-        if res.get("status") != "success":
-            return "Unable to fetch location"
-        return f"{res.get('city')}, {res.get('country')}"
-    except Exception as e:
-        return f"Location error: {str(e)}"
-
+    """Get current user location based on IP"""
+    res = requests.get("http://ip-api.com/json/", timeout=5).json()
+    if res.get("status") != "success":
+        return "Unable to fetch location"
+    return f"{res.get('city')}, {res.get('country')}"
 
 @tool
 def get_weather(location: str) -> str:
-    """Get weather"""
-    try:
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={location}&appid={OPENWEATHER_API_KEY}&units=metric"
-        res = requests.get(url, timeout=5).json()
+    """Get weather for a given location"""
+    url = (
+        f"http://api.openweathermap.org/data/2.5/weather"
+        f"?q={location}&appid={OPENWEATHER_API_KEY}&units=metric"
+    )
+    res = requests.get(url, timeout=5).json()
 
-        if res.get("cod") != 200:
-            return f"Weather error: {res.get('message')}"
+    if res.get("cod") != 200:
+        return f"Weather error: {res.get('message')}"
 
-        return f"{location}: {res['main']['temp']}°C, {res['weather'][0]['description']}"
-    except Exception as e:
-        return f"Weather error: {str(e)}"
+    return f"{location}: {res['main']['temp']}°C, {res['weather'][0]['description']}"
 
-# 5. MEMORY STORE
+
+tools = [get_current_location, get_weather]
+
+# 4. MEMORY (simple store)
 store = {}
 
 def get_session_history(session_id: str):
@@ -129,82 +119,28 @@ def get_session_history(session_id: str):
         store[session_id] = ChatMessageHistory()
     return store[session_id]
 
-# 6. PROMPT (WITH MEMORY)
-prompt = ChatPromptTemplate.from_messages([
-    ("system", """
-You are a controlled assistant.
+
+# 5. SYSTEM PROMPT
+system_prompt = """
+You are a helpful assistant.
 
 Rules:
-- Be concise
-- Use conversation history if relevant
-- Do not hallucinate
-- Say "I don't know" if unsure
-"""),
-    ("placeholder", "{history}"),
-    ("human", "{input}")
-])
+- Use tools when required
+- If user asks weather → use get_weather
+- If location needed → use get_current_location
+- Be concise and accurate
+"""
 
-# 7. LLM CHAIN
-llm_chain = prompt | llm | parser
+# 6. CREATE AGENT (NO ROUTER)
+agent = create_agent(
+    model=llm,
+    tools=tools,
+    system_prompt=system_prompt
+) 
 
-# 8. INPUT NORMALIZATION
-def extract_text(x):
-    if isinstance(x, str):
-        return x
-    elif isinstance(x, dict):
-        return x.get("input", "")
-    elif hasattr(x, "content"):
-        return x.content
-    else:
-        return str(x)
-
-def normalize_input(x):
-    return {
-        "input": extract_text(x["input"]),
-        "history": x.get("history", [])
-    }
-
-# 9. ROUTER (FIXED)
-def router(x):
-    query_text = x["input"]
-    query = query_text.lower()
-
-    # Weather
-    if "weather" in query:
-        loc = get_current_location.invoke({})
-        weather = get_weather.invoke({"location": loc})
-        return {"output": weather, "source": "weather"}
-
-    # Location
-    elif "location" in query:
-        loc = get_current_location.invoke({})
-        return {"output": loc, "source": "location"}
-
-    # LLM
-    else:
-        answer = llm_chain.invoke({
-            "input": query_text,
-            "history": x.get("history", [])
-        })
-        return {"output": answer, "source": "llm"}
-
-# 10. LCEL CHAIN
-chain = (
-    RunnableLambda(normalize_input)
-    | RunnableLambda(router)
-)
-
-# 11. MEMORY WRAPPER
-chain_with_memory = RunnableWithMessageHistory(
-    chain,
-    get_session_history,
-    input_messages_key="input",
-    history_messages_key="history"
-)
-
-# 12. RUN
+# 7. RUN LOOP WITH MEMORY
 if __name__ == "__main__":
-    print("🚀 Agent with Memory Started")
+    print("🚀 Agent with Memory Started (create_agent)")
 
     session_id = "user1"
 
@@ -212,21 +148,20 @@ if __name__ == "__main__":
         query = input("\nEnter query: ")
 
         if query.lower() == "exit":
-            print("👋 Exiting...")
             break
 
-        try:
-            response = chain_with_memory.invoke(
-                {"input": query},
-                config={"configurable": {"session_id": session_id}}
-            )
+        # get history
+        history = get_session_history(session_id).messages
 
-            print("\n===== RESPONSE =====")
-            print("Answer :", response["output"])   # ✅ FIXED
-            print("Source :", response["source"])
+        response = agent.invoke({
+            "messages": history + [("user", query)]
+        })
 
-        except Exception as e:
-            print("\n❌ Error:", str(e))
+        print("\n===== RESPONSE =====")
+        for msg in response["messages"]:
+            if getattr(msg, "tool_calls", None):
+                print(msg.tool_calls)
+        print(response["messages"][-1].content)
 
 # 1. LangChain (with `RunnableWithMessageHistory`) expects the response key to be `"output"`, not `"answer"`.
 
