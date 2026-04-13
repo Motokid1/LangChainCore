@@ -1,4 +1,8 @@
 #Architectural Pattern: Agent Pipeline with RAG and Tools
+# This pipeline demonstrates how to create an agent that can utilize tools, 
+# including a RAG search tool, while maintaining conversation history in memory. 
+# The agent can perform tasks such as answering questions based on retrieved documents and performing calculations.
+
 #                 ┌─────────────────────────┐
 # User Query ───▶│        AGENT            │
 #                 │ (create_agent)         │
@@ -85,7 +89,7 @@ vectorstore = Chroma.from_documents(
     persist_directory=CHROMA_PATH
 )
 
-# Save to disk
+# Save to disk ( optional, as from_documents with persist_directory should handle this, but we can be explicit)
 vectorstore.persist()
 
 # Retriever
