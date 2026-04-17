@@ -57,8 +57,8 @@ app = graph.compile(checkpointer=InMemorySaver())
 config = {"configurable": {"thread_id": "1"}}
 
 result = app.invoke(
-    {"messages": [("user", "Hello")], "step": 0, "logs": []},
+    {"messages": [("user", "Tell me about RAG in 1 line")], "step": 0, "logs": []},
     config=config
 )
 
-print(result)
+print(f"\nFinal AI Response: {result['messages'][-1].content}")
